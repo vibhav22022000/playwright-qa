@@ -1,0 +1,14 @@
+[
+  {
+    "description": "search for playwright",
+    "searchTerm": "playwright"
+  },
+  {
+    "description": "search for selenium",
+    "searchTerm": "selenium"
+  },
+  {
+    "description": "search for cypress",
+    "searchTerm": "cypress"
+  }
+]

@@ -1,0 +1,5 @@
+description,username,password,expectSuccess
+valid credentials,student,Password123,true
+invalid username,wronguser,Password123,false
+invalid password,student,wrongpassword,false
+empty fields,,,false

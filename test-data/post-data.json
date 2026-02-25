@@ -1,0 +1,28 @@
+[
+  {
+    "description": "valid post with all fields",
+    "payload": {
+      "title": "Hello World",
+      "body": "My first post",
+      "userId": 1
+    },
+    "expectedStatus": 201
+  },
+  {
+    "description": "post with minimal fields",
+    "payload": {
+      "title": "Minimal",
+      "userId": 1
+    },
+    "expectedStatus": 201
+  },
+  {
+    "description": "post with numeric title",
+    "payload": {
+      "title": 12345,
+      "body": "numeric title test",
+      "userId": 2
+    },
+    "expectedStatus": 201
+  }
+]
