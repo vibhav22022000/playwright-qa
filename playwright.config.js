@@ -10,7 +10,7 @@ export default defineConfig({
   reporters: "html", // generate an HTML report after tests run
   use: {
     baseURL: "https://demo.playwright.dev", // base URL for all tests
-    headless: false, // false = you SEE the browser (great for learning!)
+    headless: true, // false = you SEE the browser (great for learning!)
     screenshot: "only-on-failure", // auto screenshot when test fails
     video: "retain-on-failure", // record video on failure
   },

@@ -24,8 +24,10 @@ jobs:
         run: npm Install
         
       
-      - name: Run Playwright Tests
+      - name: Run Playwright tests
         run: npx playwright test --reporter=html
+        env:
+          CI: true # Set CI environment variable for better test output in CI
 
       - name: Upload Playwright Test Report
         uses: actions/upload-artifact@v4
