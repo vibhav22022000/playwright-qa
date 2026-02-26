@@ -1,14 +1,17 @@
 [
   {
-    "description": "search for playwright",
-    "searchTerm": "playwright"
+    "description": "search for travel",
+    "searchTerm": "travel",
+    "expectedTitle": "travel"
   },
   {
-    "description": "search for selenium",
-    "searchTerm": "selenium"
+    "description": "search for mystery",
+    "searchTerm": "mystery",
+    "expectedTitle": "mystery"
   },
   {
-    "description": "search for cypress",
-    "searchTerm": "cypress"
+    "description": "search for light",
+    "searchTerm": "light",
+    "expectedTitle": "light"
   }
 ]

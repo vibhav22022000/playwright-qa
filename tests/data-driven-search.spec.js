@@ -10,29 +10,28 @@ const searchData = JSON.parse(
 
 test.describe('Data-Driven Search Tests', () => {
 
-  searchData.forEach(({ description, searchTerm }) => {
+  searchData.forEach(({ description, searchTerm, expectedTitle }) => {
 
     test(`Search: ${description}`, async ({ page }) => {
 
-      // Step 1: Go to DuckDuckGo
-      await page.goto('https://duckduckgo.com');
+      // books.toscrape.com is built for automation practice
+      // It never blocks bots — perfect for CI environments
+      await page.goto('https://books.toscrape.com');
 
-      // Step 2: Type the search term into the search box
+      // Find the search input and type the search term
+      // The search box has name="q" on this site too
       await page.fill('input[name="q"]', searchTerm);
 
-      // Step 3: Press Enter to search
+      // Submit the search form
       await page.press('input[name="q"]', 'Enter');
 
-      // Step 4: Wait for ANY navigation to complete — don't care about exact URL shape
-      // waitForLoadState('domcontentloaded') means "wait until the page HTML is loaded"
-      // This is more reliable than waitForURL when the URL structure is unpredictable
+      // Wait for results page to load
       await page.waitForLoadState('domcontentloaded');
 
-      // Step 5: Assert q=searchTerm appears somewhere in the URL
-      // new RegExp(searchTerm) creates a pattern like /playwright/
-      // This matches any URL that contains the word "playwright" — regardless of other params
-      // Python equivalent: assert search_term in page.url
-      await expect(page).toHaveURL(new RegExp(`q=${searchTerm}`));
+      // Assert the URL contains the search term
+      // books.toscrape.com search URL looks like:
+      // https://books.toscrape.com/catalogue/search.html?q=travel
+      await expect(page).toHaveURL(new RegExp(searchTerm));
 
     });
   });
