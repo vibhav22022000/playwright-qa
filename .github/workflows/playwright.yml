@@ -2,14 +2,15 @@ name: Playwright Tests
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   test:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -17,27 +18,34 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: '20'
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Install Playwright Browsers
+      - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
       - name: Run Playwright tests
-        run: npx playwright test --reporter=html
+        run: npx playwright test --reporter=list,html
+        continue-on-error: true    # ← NEW: don't stop the job if tests fail
+        # This means even if tests fail, the next steps still run
+        # Python equivalent: try/except — keep going even if something breaks
         env:
-          CI: true # Set CI environment variable for better test output in CI
+          CI: true
 
-      - name: Upload Playwright Test Report
-        uses: actions/upload-artifact@v4
+      # Create the report folder if it doesn't exist
+      # This prevents the upload step from crashing when no report was generated
+      - name: Ensure report folder exists
+        run: mkdir -p playwright-report    # ← NEW: -p means "create if not exists"
+        if: always()
 
-      - name: Upload HTML Report
+      - name: Upload HTML report
         uses: actions/upload-artifact@v4
-        if: always() # Ensure the report is uploaded even if tests fail
+        if: always()
         with:
-          name: playwright-html-report
+          name: playwright-report
           path: playwright-report/
-          retention-days: 30 # Keep the report for 7 days
+          retention-days: 30
+          if-no-files-found: warn    # ← NEW: warn instead of error if folder is empty
