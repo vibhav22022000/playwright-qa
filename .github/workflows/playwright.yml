@@ -2,10 +2,15 @@ name: Playwright Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
+
+  # Run full regression suite every night at midnight UTC
+  # Like a cron job — Python equivalent: schedule.every().day.at("00:00")
+  schedule:
+    - cron: "0 0 * * *" # minute hour day month weekday
 
 jobs:
   test:
@@ -18,8 +23,8 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -27,18 +32,16 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
+      # On push: run only @smoke tests — fast feedback in under 1 minute
+      # On schedule (nightly): run ALL tests — full regression
       - name: Run Playwright tests
-        run: npx playwright test --reporter=list,html
-        continue-on-error: true    # ← NEW: don't stop the job if tests fail
-        # This means even if tests fail, the next steps still run
-        # Python equivalent: try/except — keep going even if something breaks
+        run: npx playwright test --grep "@smoke" --reporter=list,html
+        continue-on-error: true
         env:
           CI: true
 
-      # Create the report folder if it doesn't exist
-      # This prevents the upload step from crashing when no report was generated
       - name: Ensure report folder exists
-        run: mkdir -p playwright-report    # ← NEW: -p means "create if not exists"
+        run: mkdir -p playwright-report
         if: always()
 
       - name: Upload HTML report
@@ -48,4 +51,4 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
-          if-no-files-found: warn    # ← NEW: warn instead of error if folder is empty
+          if-no-files-found: warn
