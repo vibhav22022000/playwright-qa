@@ -1,17 +1,20 @@
 [
   {
-    "description": "search for travel",
-    "searchTerm": "travel",
-    "expectedTitle": "travel"
+    "description": "valid credentials",
+    "username": "student",
+    "password": "Password123",
+    "expectSuccess": true
   },
   {
-    "description": "search for mystery",
-    "searchTerm": "mystery",
-    "expectedTitle": "mystery"
+    "description": "wrong password",
+    "username": "student",
+    "password": "wrongpassword",
+    "expectSuccess": false
   },
   {
-    "description": "search for light",
-    "searchTerm": "light",
-    "expectedTitle": "light"
+    "description": "wrong username",
+    "username": "wronguser",
+    "password": "Password123",
+    "expectSuccess": false
   }
 ]
