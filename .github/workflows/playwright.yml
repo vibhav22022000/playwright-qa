@@ -2,29 +2,64 @@ name: Playwright Tests
 
 on:
   push:
-    branches: [main]
+    branches: [main, master]          # Run on every push to main
   pull_request:
-    branches: [main]
-  workflow_dispatch:
-
-  # Run full regression suite every night at midnight UTC
-  # Like a cron job — Python equivalent: schedule.every().day.at("00:00")
+    branches: [main, master]          # Run on every pull request to main
   schedule:
-    - cron: "0 0 * * *" # minute hour day month weekday
+    - cron: "0 0 * * *"              # Run full suite every day at midnight
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
+  # ─────────────────────────────────────────────
+  # JOB 1: SMOKE TESTS — runs on every push (fast, critical tests only)
+  # ─────────────────────────────────────────────
+  smoke-tests:
+    name: Smoke Tests
+    runs-on: ubuntu-latest            # Use Ubuntu for CI
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
+        uses: actions/checkout@v4     # Pull the repo code into the runner
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"          # Use Node 20 LTS
+
+      - name: Install dependencies
+        run: npm ci                   # Clean install — requires package-lock.json committed
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps  # Install all browsers + system deps
+
+      - name: Run smoke tests
+        run: npx playwright test --grep "@smoke"  # Only run tests tagged @smoke
+        env:
+          CI: true                    # Enables headless mode via !!process.env.CI
+
+      - name: Upload smoke test report
+        uses: actions/upload-artifact@v4
+        if: always()                  # Upload even if tests fail
+        with:
+          name: smoke-test-report
+          path: playwright-report/    # Upload the HTML report
+          if-no-files-found: warn     # Don't fail if report folder is missing
+
+  # ─────────────────────────────────────────────
+  # JOB 2: FULL SUITE — runs on schedule (all tests)
+  # ─────────────────────────────────────────────
+  full-suite:
+    name: Full Test Suite
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -32,23 +67,98 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      # On push: run only @smoke tests — fast feedback in under 1 minute
-      # On schedule (nightly): run ALL tests — full regression
-      - name: Run Playwright tests
-        run: npx playwright test --grep "@smoke" --reporter=list,html
+      - name: Create required folders
+        run: mkdir -p playwright-report test-results   # Prevents artifact upload failures
+
+      - name: Run all tests
+        run: npx playwright test                       # Run entire test suite
+        continue-on-error: true                        # Don't stop pipeline if tests fail
+        env:
+          CI: true
+
+      - name: Upload full test report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: full-test-report
+          path: playwright-report/
+          if-no-files-found: warn
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: test-results/         # Screenshots and videos on failure
+          if-no-files-found: warn
+
+  # ─────────────────────────────────────────────
+  # JOB 3: API TESTS — runs separately for speed
+  # ─────────────────────────────────────────────
+  api-tests:
+    name: API Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run API tests only
+        run: npx playwright test --grep "@api"         # Only run tests tagged @api
+        env:
+          CI: true
+
+      - name: Upload API test report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: api-test-report
+          path: playwright-report/
+          if-no-files-found: warn
+
+  # ─────────────────────────────────────────────
+  # JOB 4: MOCKING TESTS — all mocking spec files
+  # ─────────────────────────────────────────────
+  mocking-tests:
+    name: Mocking Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run mocking tests
+        run: npx playwright test tests/mocking-basics.spec.js tests/mocking-errors.spec.js tests/mocking-modify.spec.js tests/mocking-spy.spec.js tests/mocking-pom.spec.js
         continue-on-error: true
         env:
           CI: true
 
-      - name: Ensure report folder exists
-        run: mkdir -p playwright-report
-        if: always()
-
-      - name: Upload HTML report
+      - name: Upload mocking test report
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-report
+          name: mocking-test-report
           path: playwright-report/
-          retention-days: 30
           if-no-files-found: warn
